@@ -9,8 +9,14 @@ const app = express();
 // cors
 app.use(cors());
 
+// Lectura del body y parse
+app.use(express.json());
+
 //Base de datos
 dbConnection();
+
+// rutas
+app.use('/api/', require('./routes/index'));
 
 app.listen(3000, () => {
 	console.log('Corriendo');
