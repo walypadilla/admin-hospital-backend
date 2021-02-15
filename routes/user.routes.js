@@ -2,6 +2,10 @@
     Ruta: /api/usuarios
 */
 
+const { Router } = require('express');
+
+const router = Router();
+
 const { UserController } = require('../controllers/index');
 const { validarCampos } = require('../middlewares/index');
 const {
@@ -10,14 +14,10 @@ const {
 } = require('../middlewares/validationModels');
 const { validarJWT } = require('../middlewares/validar-jwt');
 
-const { Router } = require('express');
-
-const router = Router();
-
 router.get('/', validarJWT, UserController.getUsers);
 router.post(
 	'/',
-	[validationUserModel, validarCampos],
+	[validarJWT, validationUserModel, validarCampos],
 	UserController.createUser
 );
 router.put(
