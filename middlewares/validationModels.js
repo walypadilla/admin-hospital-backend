@@ -24,7 +24,14 @@ let validationUpdateUser = [
 // ================================================
 let validationLogin = [
 	check('email', 'El email es obligatorio.').isEmail(),
-	check('password', 'El password es es obligatorio.').not().isEmail(),
+	check('password', 'El password es obligatorio.').not().isEmail(),
+];
+
+// ================================================
+// validando que el login tenga token de google
+// ================================================
+let validationLoginGoogle = [
+	check('password', 'El token de Google es obligatorio.').not().isEmail(),
 ];
 
 // ================================================
@@ -49,6 +56,7 @@ module.exports = {
 	validationUserModel,
 	validationUpdateUser,
 	validationLogin,
+	validationLoginGoogle,
 	validationHospitalModel,
 	validationDoctorModel,
 };
