@@ -15,6 +15,7 @@ const {
 const { validarJWT } = require('../middlewares/validar-jwt');
 
 router.get('/', validarJWT, UserController.getUsers);
+router.get('/deleted', validarJWT, UserController.getUsersDeleted);
 router.post(
 	'/',
 	[validarJWT, validationUserModel, validarCampos],
@@ -25,6 +26,7 @@ router.put(
 	[validarJWT, validationUpdateUser, validarCampos],
 	UserController.updateUser
 );
+router.put('/restore/:id', validarJWT, UserController.restoreUser);
 router.delete('/:id', validarJWT, UserController.deleteUser);
 
 module.exports = router;

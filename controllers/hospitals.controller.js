@@ -6,7 +6,7 @@ const { HospitalModel } = require('../models/index');
 // GET - HOSPITALS
 // ==================================================================
 const getHospitals = async (req, res = response) => {
-	const hospitals = await HospitalModel.find().populate(
+	const hospitals = await HospitalModel.find({ estado: true }).populate(
 		'usuario',
 		'nombre img'
 	);
@@ -25,7 +25,7 @@ const getHospitals = async (req, res = response) => {
 	}
 };
 
-// =================================================================
+// ==================================================================
 // CREATE - HOSPITALS
 // ==================================================================
 const createHospital = async (req, res = response) => {
@@ -56,21 +56,80 @@ const createHospital = async (req, res = response) => {
 // =================================================================
 // UPDATE - HOSPITALS
 // ==================================================================
-const updateHospital = (req, res = response) => {
-	res.status(200).json({
-		ok: true,
-		msg: 'update Hospitales',
-	});
+const updateHospital = async (req, res = response) => {
+	const id = req.params.id;
+	const uid = req.uid;
+
+	try {
+		const hospitalDB = await HospitalModel.findById(id);
+		if (!hospitalDB) {
+			res.status(404).json({
+				ok: false,
+				msg: 'Hospital no encontrado.',
+			});
+		}
+
+		// extrayendo todo lo que viene en el body y el usuario
+		const changeHospital = {
+			...req.body,
+			usuario: uid,
+		};
+
+		// almacenando en la base de datos
+		const updatedHospital = await HospitalModel.findByIdAndUpdate(
+			id,
+			changeHospital,
+			{ new: true }
+		);
+
+		res.status(200).json({
+			ok: true,
+			msg: 'update Hospitales',
+			hospitalDB: updatedHospital,
+		});
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({
+			ok: false,
+			msg: 'Hable con el administrador',
+		});
+	}
 };
 
 // =================================================================
 // DELETE - HOSPITALS
 // ==================================================================
-const deleteHospital = (req, res = response) => {
-	res.status(200).json({
-		ok: true,
-		msg: 'Delete Hospitales',
-	});
+const deleteHospital = async (req, res = response) => {
+	const id = req.params.id;
+
+	try {
+		const hospitalDB = await HospitalModel.findById(id);
+		if (!hospitalDB) {
+			res.status(404).json({
+				ok: false,
+				msg: 'Hospital no encontrado.',
+			});
+		}
+
+		hospitalDB.estado = false;
+		// almacenando en la base de datos
+		const updatedHospital = await HospitalModel.findByIdAndUpdate(
+			id,
+			hospitalDB,
+			{ new: true }
+		);
+
+		res.status(200).json({
+			ok: true,
+			msg: 'Hospital eliminado correctamente.',
+		});
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({
+			ok: false,
+			msg: 'Hable con el administrador',
+		});
+	}
 };
 
 module.exports = {

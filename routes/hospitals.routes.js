@@ -20,7 +20,11 @@ router.post(
 	[validarJWT, validationHospitalModel, validarCampos],
 	HospitalsController.createHospital
 );
-router.put('/:id', validarJWT, HospitalsController.updateHospital);
+router.put(
+	'/:id',
+	[validarJWT, validationHospitalModel, validarCampos],
+	HospitalsController.updateHospital
+);
 router.delete('/:id', validarJWT, HospitalsController.deleteHospital);
 
 module.exports = router;

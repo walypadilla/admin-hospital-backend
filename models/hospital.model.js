@@ -17,6 +17,10 @@ const HospitalModel = Schema(
 		img: {
 			type: String,
 		},
+		estado: {
+			type: Boolean,
+			default: true,
+		},
 		usuario: {
 			required: true,
 			type: Schema.Types.ObjectId,

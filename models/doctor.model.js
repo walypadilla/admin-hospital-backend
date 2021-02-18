@@ -18,6 +18,10 @@ const DoctorModel = Schema(
 		img: {
 			type: String,
 		},
+		estado: {
+			type: Boolean,
+			default: true,
+		},
 		usuario: {
 			type: Schema.Types.ObjectId,
 			ref: 'Usuario',

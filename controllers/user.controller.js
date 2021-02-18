@@ -5,6 +5,29 @@ const { UserModel } = require('../models/index');
 const { generarJWT } = require('../helpers/jwt');
 
 // ================================================
+// GetUsers -- ESTADO FALSE OR DELETED
+// ================================================
+const getUsersDeleted = async (req, res, next) => {
+	const desde = Number(req.query.desde) || 0;
+
+	// promise.all me permite correr de manera simultanea las 2 promesas
+	const [usuarios, total] = await Promise.all([
+		UserModel.find({ estado: false }, 'nombre apellido email role google img')
+			.skip(desde)
+			.limit(5),
+
+		UserModel.countDocuments({ estado: false }),
+	]);
+
+	res.json({
+		ok: true,
+		usuarios,
+		uid: req.uid,
+		total,
+	});
+};
+
+// ================================================
 // GetUsers
 // ================================================
 const getUsers = async (req, res, next) => {
@@ -12,11 +35,11 @@ const getUsers = async (req, res, next) => {
 
 	// promise.all me permite correr de manera simultanea las 2 promesas
 	const [usuarios, total] = await Promise.all([
-		UserModel.find({}, 'nombre apellido email role google img')
+		UserModel.find({ estado: true }, 'nombre apellido email role google img')
 			.skip(desde)
 			.limit(5),
 
-		UserModel.countDocuments(),
+		UserModel.countDocuments({ estado: true }),
 	]);
 
 	res.json({
@@ -106,7 +129,7 @@ const updateUser = async (req, res = response, next) => {
 			new: true,
 		});
 
-		res.json({ ok: true, usuario: updateUser });
+		res.status(201).json({ ok: true, usuario: updateUser });
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({
@@ -116,6 +139,41 @@ const updateUser = async (req, res = response, next) => {
 	}
 };
 
+// ================================================
+// Restore User
+// ================================================
+const restoreUser = async (req, res = response, next) => {
+	const uid = req.params.id;
+
+	try {
+		const usuarioDB = await UserModel.findById(uid);
+		// validando si el usuario existe
+		if (!usuarioDB) {
+			res.status(404).json({
+				ok: false,
+				msg: 'No existe un usuario por ese id.',
+			});
+		}
+		// cambiando estado a true para indicar que restauraremos ese usuario
+		usuarioDB.estado = true;
+
+		const userRestored = await UserModel.findByIdAndUpdate(uid, usuarioDB, {
+			new: true,
+		});
+
+		res.json({
+			ok: true,
+			msg: 'Usuario restaurado correctamente.',
+			usuario: userRestored,
+		});
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({
+			ok: false,
+			smg: 'Error inesperado... revisar logs',
+		});
+	}
+};
 // ================================================
 // DeleteUser
 // ================================================
@@ -152,8 +210,10 @@ const deleteUser = async (req, res = response, next) => {
 };
 
 module.exports = {
+	getUsersDeleted,
 	getUsers,
 	createUser,
 	updateUser,
+	restoreUser,
 	deleteUser,
 };

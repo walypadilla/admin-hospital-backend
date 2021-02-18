@@ -2,17 +2,47 @@ const { response } = require('express');
 const { DoctorModel } = require('../models/index');
 
 // =================================================================
-// GET - doctor
+// GET - doctor --DELETED
 // ==================================================================
-const getDoctors = async (req, res = response) => {
-	const doctors = await DoctorModel.find()
-		.populate('usuario', 'nombre img')
-		.populate('hospital', 'nombre');
-
+const getDoctorsDeleted = async (req, res = response) => {
 	try {
+		const [doctors, total] = await Promise.all([
+			DoctorModel.find({ estado: false }).populate('hospital', 'nombre'),
+
+			DoctorModel.countDocuments({ estado: false }),
+		]);
+
 		res.status(200).json({
 			ok: true,
 			doctors,
+			total,
+		});
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({
+			ok: false,
+			msg: 'Hable con el administrador',
+		});
+	}
+};
+
+// =================================================================
+// GET - doctor
+// ==================================================================
+const getDoctors = async (req, res = response) => {
+	try {
+		const [doctors, total] = await Promise.all([
+			DoctorModel.find({ estado: true })
+				.populate('usuario', 'nombre img')
+				.populate('hospital', 'nombre'),
+
+			DoctorModel.countDocuments({ estado: true }),
+		]);
+
+		res.status(200).json({
+			ok: true,
+			doctors,
+			total,
 		});
 	} catch (error) {
 		console.log(error);
@@ -64,26 +94,120 @@ const createDoctor = async (req, res = response) => {
 // =================================================================
 // UPDATE - doctor
 // ==================================================================
-const updateDoctor = (req, res = response) => {
-	res.status(200).json({
-		ok: true,
-		msg: 'update Doctores',
-	});
+const updateDoctor = async (req, res = response) => {
+	const id = req.params.id;
+	const uid = req.uid;
+
+	try {
+		const doctorDB = await DoctorModel.findById(id);
+		if (!doctorDB) {
+			res.status(404).json({
+				ok: false,
+				msg: 'Doctor no encontrado.',
+			});
+		}
+
+		// extrayendo todo lo que viene en el body y el usuario
+		const changeHospital = {
+			...req.body,
+			usuario: uid,
+		};
+
+		// almacenando en la base de datos
+		const updatedDoctor = await DoctorModel.findByIdAndUpdate(
+			id,
+			changeHospital,
+			{ new: true }
+		);
+
+		res.status(200).json({
+			ok: true,
+			msg: 'update Doctor',
+			doctorDB: updatedDoctor,
+		});
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({
+			ok: false,
+			msg: 'Hable con el administrador',
+		});
+	}
+};
+
+// =================================================================
+// RESTORE - doctor
+// ==================================================================
+const restoreDoctor = async (req, res = response) => {
+	const id = req.params.id;
+
+	try {
+		const doctorDB = await DoctorModel.findById(id);
+		if (!doctorDB) {
+			res.status(404).json({
+				ok: false,
+				msg: 'Doctor no encontrado.',
+			});
+		}
+
+		doctorDB.estado = true;
+		// almacenando en la base de datos
+		const updatedDoctor = await DoctorModel.findByIdAndUpdate(id, doctorDB, {
+			new: true,
+		});
+
+		res.status(200).json({
+			ok: true,
+			msg: 'Doctor restaurado correctamente.',
+			updatedDoctor,
+		});
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({
+			ok: false,
+			msg: 'Hable con el administrador',
+		});
+	}
 };
 
 // =================================================================
 // DELETE - doctor
 // ==================================================================
-const deleteDoctor = (req, res = response) => {
-	res.status(200).json({
-		ok: true,
-		msg: 'Delete Doctores',
-	});
+const deleteDoctor = async (req, res = response) => {
+	const id = req.params.id;
+
+	try {
+		const doctorDB = await DoctorModel.findById(id);
+		if (!doctorDB) {
+			res.status(404).json({
+				ok: false,
+				msg: 'Doctor no encontrado.',
+			});
+		}
+
+		doctorDB.estado = false;
+		// almacenando en la base de datos
+		const updatedHospital = await DoctorModel.findByIdAndUpdate(id, doctorDB, {
+			new: true,
+		});
+
+		res.status(200).json({
+			ok: true,
+			msg: 'Doctor eliminado correctamente.',
+		});
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({
+			ok: false,
+			msg: 'Hable con el administrador',
+		});
+	}
 };
 
 module.exports = {
+	getDoctorsDeleted,
 	getDoctors,
 	createDoctor,
 	updateDoctor,
+	restoreDoctor,
 	deleteDoctor,
 };
